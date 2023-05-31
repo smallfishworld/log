@@ -201,3 +201,47 @@ int main() {
 
     return 0;
 }
+
+#include <stdio.h>
+
+struct DateTime {
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+    int second;
+};
+
+// 比较日期时间 dt1 和 dt2 的前后关系
+int compareDateTime(struct DateTime dt1, struct DateTime dt2) {
+    if (dt1.year != dt2.year)
+        return (dt1.year < dt2.year) ? -1 : 1;
+    if (dt1.month != dt2.month)
+        return (dt1.month < dt2.month) ? -1 : 1;
+    if (dt1.day != dt2.day)
+        return (dt1.day < dt2.day) ? -1 : 1;
+    if (dt1.hour != dt2.hour)
+        return (dt1.hour < dt2.hour) ? -1 : 1;
+    if (dt1.minute != dt2.minute)
+        return (dt1.minute < dt2.minute) ? -1 : 1;
+    if (dt1.second != dt2.second)
+        return (dt1.second < dt2.second) ? -1 : 1;
+    return 0; // 日期时间相等
+}
+
+int main() {
+    struct DateTime dt1 = {2022, 5, 15, 10, 30, 0};
+    struct DateTime dt2 = {2023, 2, 28, 12, 0, 0};
+
+    int result = compareDateTime(dt1, dt2);
+
+    if (result < 0)
+        printf("dt1 在 dt2 之前\n");
+    else if (result > 0)
+        printf("dt1 在 dt2 之后\n");
+    else
+        printf("dt1 和 dt2 相同\n");
+
+    return 0;
+}
