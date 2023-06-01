@@ -295,3 +295,52 @@ int main() {
 
     return 0;
 }
+
+#include <stdio.h>
+#include <string.h>
+
+// 替换字符串中的子串
+void replaceSubstring(char *str, const char *oldSubstr, const char *newSubstr) {
+    if (str == NULL || oldSubstr == NULL || newSubstr == NULL) {
+        // 参数为空，抛出异常或执行相应的错误处理逻辑
+        printf("参数不能为空\n");
+        return;
+    }
+
+    size_t oldSubstrLen = strlen(oldSubstr);
+    size_t newSubstrLen = strlen(newSubstr);
+
+    char *pos = strstr(str, oldSubstr); // 找到第一个匹配子串的位置
+
+    while (pos != NULL) {
+        // 检查新字符串长度是否超过原字符串长度
+        if (newSubstrLen > oldSubstrLen) {
+            // 新字符串长度超过原字符串长度，抛出异常或执行相应的错误处理逻辑
+            printf("新字符串长度超过原字符串长度\n");
+            return;
+        }
+
+        // 将匹配子串之后的部分向前移动
+        memmove(pos + newSubstrLen, pos + oldSubstrLen, strlen(pos + oldSubstrLen) + 1);
+        
+        // 复制新的子串到位置 pos
+        memcpy(pos, newSubstr, newSubstrLen);
+
+        // 继续查找下一个匹配子串的位置
+        pos = strstr(pos + newSubstrLen, oldSubstr);
+    }
+}
+
+int main() {
+    char str[] = "/mnt/mmc01/log/.temp/1.zip";
+    const char *oldSubstr = ".temp/";
+    const char *newSubstr = "";
+
+    printf("原始字符串: %s\n", str);
+
+    replaceSubstring(str, oldSubstr, newSubstr);
+
+    printf("替换后字符串: %s\n", str);
+
+    return 0;
+}
