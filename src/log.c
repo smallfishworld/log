@@ -468,3 +468,81 @@ int main() {
 
     return 0;
 }
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+void removeContent(const char* filename, off_t sizeToRemove) {
+    int file = open(filename, O_RDWR);
+    if (file == -1) {
+        printf("无法打开文件 %s\n", filename);
+        return;
+    }
+
+    struct stat fileInfo;
+    if (fstat(file, &fileInfo) == -1) {
+        printf("无法获取文件信息\n");
+        close(file);
+        return;
+    }
+
+    off_t fileSize = fileInfo.st_size;
+
+    if (sizeToRemove <= 0 || sizeToRemove >= fileSize) {
+        printf("无效的删除大小\n");
+        close(file);
+        return;
+    }
+
+    // 移动文件指针到删除内容的起始位置
+    off_t offset = sizeToRemove;
+    if (lseek(file, offset, SEEK_SET) == -1) {
+        printf("无法定位文件指针\n");
+        close(file);
+        return;
+    }
+
+    // 读取剩余内容并移动到文件的开始位置
+    ssize_t bytesRead;
+    ssize_t bytesWritten;
+    char buffer[4096];
+    while ((bytesRead = read(file, buffer, sizeof(buffer))) > 0) {
+        offset -= bytesRead;
+        if (lseek(file, offset, SEEK_SET) == -1) {
+            printf("无法定位文件指针\n");
+            close(file);
+            return;
+        }
+        bytesWritten = write(file, buffer, bytesRead);
+        if (bytesWritten != bytesRead) {
+            printf("写入文件时发生错误\n");
+            close(file);
+            return;
+        }
+    }
+
+    // 截断文件大小
+    if (ftruncate(file, fileSize - sizeToRemove) == -1) {
+        printf("截断文件时发生错误\n");
+        close(file);
+        return;
+    }
+
+    close(file);
+
+    printf("已删除文件前 %lld 字节的内容\n", (long long)sizeToRemove);
+}
+
+int main() {
+    const char* filename = "example.txt";
+    off_t sizeToRemove = 1000000; // 要删除的字节数
+
+    removeContent(filename, sizeToRemove);
+
+    return 0;
+}
