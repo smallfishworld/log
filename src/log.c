@@ -344,3 +344,49 @@ int main() {
 
     return 0;
 }
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define LOG_FILE "kernel_log.txt"
+
+int main() {
+    FILE *logFile = fopen(LOG_FILE, "w");
+    if (logFile == NULL) {
+        printf("Failed to open the log file.\n");
+        return 1;
+    }
+
+    FILE *kernelLog = popen("dmesg", "r");
+    if (kernelLog == NULL) {
+        printf("Failed to open the kernel log.\n");
+        fclose(logFile);
+        return 1;
+    }
+
+    char buffer[512];
+    while (1) {
+        while (fgets(buffer, sizeof(buffer), kernelLog) != NULL) {
+            fprintf(logFile, "%s", buffer);
+        }
+        fflush(logFile);  // 刷新缓冲区，确保内容实时写入文件
+
+        // 暂停一段时间
+        sleep(1);
+
+        // 关闭、重新打开 `kernelLog`，以获取更新的内容
+        pclose(kernelLog);
+        kernelLog = popen("dmesg", "r");
+        if (kernelLog == NULL) {
+            printf("Failed to open the kernel log.\n");
+            break;
+        }
+    }
+
+    pclose(kernelLog);
+    fclose(logFile);
+
+    return 0;
+}
