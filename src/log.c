@@ -546,3 +546,66 @@ int main() {
 
     return 0;
 }
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+
+void removeContent(const char* filename, off_t sizeToRemove) {
+    int file = open(filename, O_RDWR);
+    if (file == -1) {
+        printf("无法打开文件 %s\n", filename);
+        return;
+    }
+
+    struct stat fileInfo;
+    if (fstat(file, &fileInfo) == -1) {
+        printf("无法获取文件信息\n");
+        close(file);
+        return;
+    }
+
+    off_t fileSize = fileInfo.st_size;
+
+    if (sizeToRemove <= 0 || sizeToRemove >= fileSize) {
+        printf("无效的删除大小\n");
+        close(file);
+        return;
+    }
+
+    void* fileData = mmap(NULL, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
+    if (fileData == MAP_FAILED) {
+        printf("无法映射文件到内存\n");
+        close(file);
+        return;
+    }
+
+    // 移动文件内容
+    memmove(fileData, fileData + sizeToRemove, fileSize - sizeToRemove);
+
+    // 截断文件大小
+    if (ftruncate(file, fileSize - sizeToRemove) == -1) {
+        printf("截断文件时发生错误\n");
+        close(file);
+        return;
+    }
+
+    munmap(fileData, fileSize);
+    close(file);
+
+    printf("已删除文件前 %lld 字节的内容\n", (long long)sizeToRemove);
+}
+
+int main() {
+    const char* filename = "example.txt";
+    off_t sizeToRemove = 1000000; // 要删除的字节数
+
+    removeContent(filename, sizeToRemove);
+
+    return 0;
+}
